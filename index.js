@@ -22,12 +22,42 @@ async function run() {
     const productsCollection = database.collection("allproducts");
     const purchaseCollection = database.collection("purchase_collection");
     const reviewCollection = database.collection("reviewCollection");
+    const usersCollection = database.collection("users");
+    //////
+    app.post("/users", async (req, res) => {
+      const users = req.body;
+      const result = await usersCollection.insertOne(users);
+      res.json(result);
+      console.log(result);
+      console.log(users);
+    });
 
+    app.put("/users/makeamdin", async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const updateDoc = { $set: { role: "admin" } };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let isAdmin = false;
+      if (user?.role === "admin") {
+        isAdmin = true;
+      }
+      res.json({ admin: isAdmin });
+    });
+
+    ////////////
     app.get("/allorders", async (req, res) => {
       const cursor = await purchaseCollection.find({});
       const result = await cursor.toArray();
       res.json(result);
     });
+
+    //
     app.get("/myorders", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
@@ -62,25 +92,18 @@ async function run() {
     });
     /////////////
 
-    app.post("/clientreview", async (req, res) => {
-      const clientReview = req.body;
-      const review = await reviewCollection.insertOne(clientReview);
-      res.json(review);
-    });
-
     app.get("/clientsreview", async (req, res) => {
       const cursor = await reviewCollection.find({});
       const result = await cursor.toArray();
       res.json(result);
     });
 
-    app.put("/makeamdin", async (req, res) => {
-      const user = req.body.admin;
-      const filter = { email: user };
-      const updateDoc = { $set: { role: "admin" } };
-      const result = await purchaseCollection.updateOne(filter, updateDoc);
-      res.json(result);
+    app.post("/clientreview", async (req, res) => {
+      const clientReview = req.body;
+      const review = await reviewCollection.insertOne(clientReview);
+      res.json(review);
     });
+
     //////////////
   } finally {
     // await client.close();
