@@ -21,16 +21,26 @@ async function run() {
     const database = client.db("auqadb");
     const productsCollection = database.collection("allproducts");
     const purchaseCollection = database.collection("purchase_collection");
+    const reviewCollection = database.collection("reviewCollection");
 
     app.get("/allorders", async (req, res) => {
+      const cursor = await purchaseCollection.find({});
+      const result = await cursor.toArray();
+      res.json(result);
+    });
+    app.get("/myorders", async (req, res) => {
       const email = req.query.email;
-
       const query = { email: email };
-
       const cursor = purchaseCollection.find(query);
       const products = await cursor.toArray();
       res.json(products);
     });
+    app.post("/completePurches", async (req, res) => {
+      const completePurchase = req.body;
+      const result = await purchaseCollection.insertOne(completePurchase);
+      res.json(result);
+    });
+    //////////
 
     app.post("/addnewproduct", async (req, res) => {
       const addProduct = req.body;
@@ -50,18 +60,28 @@ async function run() {
       const addProduct = await productsCollection.findOne(query);
       res.json(addProduct);
     });
+    /////////////
 
-    app.get("/allorders", async (req, res) => {
-      const cursor = await purchaseCollection.find({});
+    app.post("/clientreview", async (req, res) => {
+      const clientReview = req.body;
+      const review = await reviewCollection.insertOne(clientReview);
+      res.json(review);
+    });
+
+    app.get("/clientsreview", async (req, res) => {
+      const cursor = await reviewCollection.find({});
       const result = await cursor.toArray();
       res.json(result);
     });
 
-    app.post("/completePurches", async (req, res) => {
-      const completePurchase = req.body;
-      const result = await purchaseCollection.insertOne(completePurchase);
+    app.put("/makeamdin", async (req, res) => {
+      const user = req.body.admin;
+      const filter = { email: user };
+      const updateDoc = { $set: { role: "admin" } };
+      const result = await purchaseCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
+    //////////////
   } finally {
     // await client.close();
   }
